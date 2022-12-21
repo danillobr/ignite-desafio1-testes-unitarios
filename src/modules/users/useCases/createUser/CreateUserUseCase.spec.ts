@@ -23,18 +23,18 @@ describe("Create a user", () => {
   });
 
   it("Should not be able create a user with an existent email", async () => {
-    expect(async () =>{
+    expect(async () => {
       await createUserUseCase.execute({
         name: "user1",
         email: "email@test",
         password: "test",
       });
-  
+
       const user = await createUserUseCase.execute({
         name: "user2",
         email: "email@test",
         password: "test",
       });
-    }).rejects.toBeInstanceOf(CreateUserError)
+    }).rejects.toBeInstanceOf(CreateUserError);
   });
 });
