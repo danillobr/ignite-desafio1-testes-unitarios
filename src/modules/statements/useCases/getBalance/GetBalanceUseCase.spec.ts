@@ -8,25 +8,27 @@ import { GetBalanceUseCase } from "./GetBalanceUseCase";
 import { CreateUserUseCase } from "../../../users/useCases/createUser/CreateUserUseCase";
 import { CreateStatementUseCase } from "../createStatement/CreateStatementUseCase";
 import { OperationType } from "../../entities/Statement";
+import { InMemoryUsersRepository } from "../../../users/repositories/in-memory/InMemoryUsersRepository";
+import { InMemoryStatementsRepository } from "../../repositories/in-memory/InMemoryStatementsRepository";
 
-let statementsRepository: IStatementsRepository;
-let usersRepository: IUsersRepository;
+let inMemoryStatementsRepository: IStatementsRepository;
+let inMemoryUsersRepository: IUsersRepository;
 let getBalanceUseCase: GetBalanceUseCase;
 let createUserUserCase: CreateUserUseCase;
 let createStatementUseCase: CreateStatementUseCase;
 
 describe("Get the balance", () => {
   beforeEach(() => {
-    statementsRepository = new StatementsRepository();
-    usersRepository = new UsersRepository();
+    inMemoryStatementsRepository = new InMemoryStatementsRepository();
+    inMemoryUsersRepository = new InMemoryUsersRepository();
     getBalanceUseCase = new GetBalanceUseCase(
-      statementsRepository,
-      usersRepository
+      inMemoryStatementsRepository,
+      inMemoryUsersRepository
     );
-    createUserUserCase = new CreateUserUseCase(usersRepository);
+    createUserUserCase = new CreateUserUseCase(inMemoryUsersRepository);
     createStatementUseCase = new CreateStatementUseCase(
-      usersRepository,
-      statementsRepository
+      inMemoryUsersRepository,
+      inMemoryStatementsRepository
     );
   });
 
@@ -35,12 +37,6 @@ describe("Get the balance", () => {
       name: "user1",
       email: "user1@email",
       password: "user1123",
-    });
-
-    const user2 = await createUserUserCase.execute({
-      name: "user2",
-      email: "user2@email",
-      password: "user2123",
     });
 
     await createStatementUseCase.execute({
@@ -53,8 +49,31 @@ describe("Get the balance", () => {
     await createStatementUseCase.execute({
       user_id: user1.id as string,
       type: OperationType.WITHDRAW,
-      amount: 500,
-      description: "Withdrawing 500 R$",
+      amount: 400,
+      description: "Withdrawing 400 R$",
     });
+
+    await createStatementUseCase.execute({
+      user_id: user1.id as string,
+      type: OperationType.DEPOSIT,
+      amount: 500,
+      description: "Depositing 500 R$",
+    });
+
+    const balance = await getBalanceUseCase.execute({
+      user_id: user1.id as string,
+    });
+
+    expect(balance).toHaveProperty("balance");
+    expect(balance.balance === 1100);
+    expect(balance.statement.length).toBe(3);
+  });
+
+  it("Should not be able to get the account balance form an inexistent user", () => {
+    expect(async () => {
+      await getBalanceUseCase.execute({
+        user_id: "incorrect id",
+      });
+    }).rejects.toBeInstanceOf(GetBalanceError);
   });
 });
