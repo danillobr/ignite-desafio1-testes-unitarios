@@ -12,36 +12,37 @@ let createUserUseCase: CreateUserUseCase;
 let authenticateUserUseCase: AuthenticateUserUseCase;
 
 describe("Show user profile", () => {
+  beforeEach(() => {
+    usersRepository = new InMemoryUsersRepository();
+    showUserProfileUseCase = new ShowUserProfileUseCase(usersRepository);
+    createUserUseCase = new CreateUserUseCase(usersRepository);
+    authenticateUserUseCase = new AuthenticateUserUseCase(usersRepository);
+  });
 
-    beforeEach(() =>{
-        usersRepository = new InMemoryUsersRepository();
-        showUserProfileUseCase = new ShowUserProfileUseCase(usersRepository);
-        createUserUseCase = new CreateUserUseCase(usersRepository);
-        authenticateUserUseCase = new AuthenticateUserUseCase(usersRepository);
+  it("Should be able to show the user profile", async () => {
+    const user: ICreateUserDTO = {
+      email: "email@test",
+      name: "test",
+      password: "test1234",
+    };
+
+    await createUserUseCase.execute(user);
+
+    const token = await authenticateUserUseCase.execute({
+      email: user.email,
+      password: user.password,
     });
 
-    it("Should be able to show the user profile", async ()=>{
-        const user: ICreateUserDTO = {
-            email: "email@test",
-            name: "test",
-            password: "test1234"
-        }
+    const userProfile = await showUserProfileUseCase.execute(
+      token.user.id as string
+    );
 
-        const userInMemory = await createUserUseCase.execute(user);
+    expect(userProfile).toHaveProperty("id");
+  });
 
-        const token = await authenticateUserUseCase.execute({
-            email: user.email,
-            password: user.password,
-        });
-        
-        const userProfile = await showUserProfileUseCase.execute(token.user.id as string);
-
-        expect(userProfile).toHaveProperty("id");
-    });
-
-    it("Should not be able to show the profile when user does not exists", ()=>{
-        expect(async () => {
-            await showUserProfileUseCase.execute("Incorrect id");
-        }).rejects.toBeInstanceOf(ShowUserProfileError);
-    });
+  it("Should not be able to show the profile when user does not exists", () => {
+    expect(async () => {
+      await showUserProfileUseCase.execute("Incorrect id");
+    }).rejects.toBeInstanceOf(ShowUserProfileError);
+  });
 });
