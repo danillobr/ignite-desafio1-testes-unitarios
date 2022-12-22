@@ -8,6 +8,7 @@ import { OperationType } from "../../entities/Statement";
 import { InMemoryUsersRepository } from "../../../users/repositories/in-memory/InMemoryUsersRepository";
 import { InMemoryStatementsRepository } from "../../repositories/in-memory/InMemoryStatementsRepository";
 import { AuthenticateUserUseCase } from "../../../users/useCases/authenticateUser/AuthenticateUserUseCase";
+import { ICreateUserDTO } from "../../../users/useCases/createUser/ICreateUserDTO";
 
 let inMemoryStatementsRepository: IStatementsRepository;
 let inMemoryUsersRepository: IUsersRepository;
@@ -35,11 +36,13 @@ describe("Get the balance", () => {
   });
 
   it("Should be able to get the user account balance", async () => {
-    const user = await createUserUserCase.execute({
-      name: "user1",
-      email: "user1@email",
-      password: "user1123",
-    });
+    const user: ICreateUserDTO = {
+      email: "email@test",
+      name: "test",
+      password: "test1234",
+    };
+
+    await createUserUserCase.execute(user);
 
     const token = await authenticateUserUseCase.execute({
       email: user.email,
@@ -68,7 +71,7 @@ describe("Get the balance", () => {
     });
 
     const balance = await getBalanceUseCase.execute({
-      user_id: user.id as string,
+      user_id: token.user.id as string,
     });
 
     expect(balance).toHaveProperty("balance");
