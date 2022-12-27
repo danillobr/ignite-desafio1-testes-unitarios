@@ -54,14 +54,88 @@ describe("Create a statement", () => {
     expect(statementOperation.amount).toEqual(1000);
   });
 
-  it("Should not be able to create a deposit with incorrect id", async () => {
-    expect(
-      createStatementUseCase.execute({
+  it("Should not be able to create a deposit with incorrect id", () => {
+    expect(async () => {
+      await createStatementUseCase.execute({
         user_id: "Id incorrect",
         type: OperationType.DEPOSIT,
         amount: 1000,
         description: " Depositing 1000 R$",
-      })
-    ).rejects.toBeInstanceOf(CreateStatementError.UserNotFound);
+      });
+    }).rejects.toBeInstanceOf(CreateStatementError.UserNotFound);
+  });
+
+  it("Should be able to create a withdraw", async () => {
+    const user: ICreateUserDTO = {
+      email: "email@test",
+      name: "test",
+      password: "test1234",
+    };
+
+    await createUserUseCase.execute(user);
+
+    const token = await authenticateUserUseCase.execute({
+      email: user.email,
+      password: user.password,
+    });
+
+    await createStatementUseCase.execute({
+      user_id: token.user.id as string,
+      type: OperationType.DEPOSIT,
+      amount: 1000,
+      description: " Depositing 1000 R$",
+    });
+
+    const statementOperation = await createStatementUseCase.execute({
+      user_id: token.user.id as string,
+      type: OperationType.WITHDRAW,
+      amount: 1000,
+      description: " Withdrawing 1000 R$",
+    });
+
+    expect(statementOperation).toHaveProperty("id");
+    expect(statementOperation.amount).toEqual(1000);
+  });
+
+  it("Should not be able to create a withdraw with incorrect id", () => {
+    expect(async () => {
+      await createStatementUseCase.execute({
+        user_id: "Id incorrect",
+        type: OperationType.WITHDRAW,
+        amount: 1000,
+        description: " Withdrawing 1000 R$",
+      });
+    }).rejects.toBeInstanceOf(CreateStatementError.UserNotFound);
+  });
+
+  it("Should not be able to create a withdraw when user has insufficient funds", () => {
+    expect(async () => {
+      const user: ICreateUserDTO = {
+        email: "email@test",
+        name: "test",
+        password: "test1234",
+      };
+
+      await createUserUseCase.execute(user);
+
+      const token = await authenticateUserUseCase.execute({
+        email: user.email,
+        password: user.password,
+      });
+
+      await createStatementUseCase.execute({
+        user_id: token.user.id as string,
+        type: OperationType.DEPOSIT,
+        amount: 1000,
+        description: " Depositing 1000 R$",
+      });
+
+      const statementOperation = await createStatementUseCase.execute({
+        user_id: token.user.id as string,
+        type: OperationType.WITHDRAW,
+        amount: 1000,
+        description: " Withdrawing 1001 R$",
+      });
+    }).rejects.toBeInstanceOf(CreateStatementError.InsufficientFunds);
   });
 });
