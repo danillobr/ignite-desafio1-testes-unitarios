@@ -13,7 +13,7 @@ import { ICreateUserDTO } from "../../../users/useCases/createUser/ICreateUserDT
 let inMemoryStatementsRepository: IStatementsRepository;
 let inMemoryUsersRepository: IUsersRepository;
 let getBalanceUseCase: GetBalanceUseCase;
-let createUserUserCase: CreateUserUseCase;
+let createUserUseCase: CreateUserUseCase;
 let createStatementUseCase: CreateStatementUseCase;
 let authenticateUserUseCase: AuthenticateUserUseCase;
 
@@ -25,7 +25,7 @@ describe("Get the balance", () => {
       inMemoryStatementsRepository,
       inMemoryUsersRepository
     );
-    createUserUserCase = new CreateUserUseCase(inMemoryUsersRepository);
+    createUserUseCase = new CreateUserUseCase(inMemoryUsersRepository);
     createStatementUseCase = new CreateStatementUseCase(
       inMemoryUsersRepository,
       inMemoryStatementsRepository
@@ -42,7 +42,7 @@ describe("Get the balance", () => {
       password: "test1234",
     };
 
-    await createUserUserCase.execute(user);
+    await createUserUseCase.execute(user);
 
     const token = await authenticateUserUseCase.execute({
       email: user.email,
