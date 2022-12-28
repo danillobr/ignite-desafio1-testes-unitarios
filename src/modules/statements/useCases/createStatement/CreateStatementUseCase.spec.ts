@@ -105,7 +105,7 @@ describe("Create a statement", () => {
         amount: 1000,
         description: " Withdrawing 1000 R$",
       });
-    }).rejects.toBeInstanceOf(CreateStatementError.UserNotFound);
+    }).rejects.toEqual(new CreateStatementError.UserNotFound());
   });
 
   it("Should not be able to create a withdraw when user has insufficient funds", () => {
@@ -130,12 +130,12 @@ describe("Create a statement", () => {
         description: " Depositing 1000 R$",
       });
 
-      const statementOperation = await createStatementUseCase.execute({
+      await createStatementUseCase.execute({
         user_id: token.user.id as string,
         type: OperationType.WITHDRAW,
-        amount: 1000,
+        amount: 1001,
         description: " Withdrawing 1001 R$",
       });
-    }).rejects.toBeInstanceOf(CreateStatementError.InsufficientFunds);
+    }).rejects.toEqual(new CreateStatementError.InsufficientFunds());
   });
 });
